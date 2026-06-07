@@ -5,34 +5,50 @@ on:
       - v*
 
 jobs:
-  desktop:
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  macos:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          version: latest
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
       - run: pnpm install
-
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: |
-            aarch64-apple-darwin
-            x86_64-apple-darwin
-            x86_64-pc-windows-msvc
-
+          targets: aarch64-apple-darwin
       - name: Build
         run: pnpm tauri build
-
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-${{ matrix.os }}
+          name: desktop-macos
+          path: src-tauri/target/release/bundle/
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - name: Build
+        run: pnpm tauri build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows
           path: src-tauri/target/release/bundle/
 
   android:
@@ -40,12 +56,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          version: latest
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
       - run: pnpm install
-
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -54,13 +71,10 @@ jobs:
             armv7-linux-androideabi
             i686-linux-android
             x86_64-linux-android
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-
       - name: Build Android
         run: pnpm tauri android build
-
       - uses: actions/upload-artifact@v4
         with:
           name: android-apk
